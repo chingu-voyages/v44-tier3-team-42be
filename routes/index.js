@@ -25,19 +25,18 @@ router.get('/', function(req, res, next) {
 
 router.post('/save-journal', async function(req, res, next) {
   const client = await pool.connect()
-  console.log(req.body);
-  //res.send(req.body);
-  //return { message: `${req.body}`}
-  const userId = req.user.id;
+  
+  const userId = req.user.id;  
   const title = req.body.title;
-  const entry = req.body.journalEntry;
-  const numberOfPages = journalDivider.journalDivider(entry).length;
+  //const entry = req.body.journalEntry;
+  const url = req.body.url;
+  //const numberOfPages = journalDivider.journalDivider(entry).length;
   //const functionText = journalDivider.journalDivider.toString();
   //const firstArray = journalDivider.journalDivider(entry[0]);
 
 
-  const text = 'INSERT INTO journal_references(user_id, journal_title) VALUES($1, $2) RETURNING *'
-  const values = [userId, title]
+  const text = 'INSERT INTO journal_references(user_id, journal_title, cover_image) VALUES($1, $2, $3) RETURNING *'
+  const values = [userId, title, url]
 
   try {
     const res = await client.query(text, values)
@@ -48,12 +47,17 @@ router.post('/save-journal', async function(req, res, next) {
   }
 
   //client.query
+  //res.locals.messages = [`title entered: ${title}, journal entry: ${entry}, number of pages: ${numberOfPages}`];
 
-  res.locals.messages = [`title entered: ${title}, journal entry: ${entry}, number of pages: ${numberOfPages}`];
+  res.locals.messages = [`title entered: ${title}, url: ${url}`];
   res.locals.hasMessages = true;
   //console.log(res.locals)
   //res.redirect('/');
-  return res.render('index', { user: req.user });
+  return res.status(200).json({ message: 'details saved' });
+  //.redirect('/')
+  //.redirect('/').json({ message: 'details saved' });
+  
+  //return res.render('index', { user: req.user });
   client.release()
   next();
   //cb({ message: 'Incorrect username or password.' });

@@ -1,10 +1,11 @@
 # how to set up and install app
 
-The first stage is to create and configure a PostgreSQL database. If PostgreSQL is not already installed, install from the command line as follows:
-~~~
-npm install postgresql
-~~~
-From the command line navigate to the following folder:
+The first stage is to create and configure a PostgreSQL database. If PostgreSQL is not already installed, install it for your OS by 
+visiting this link and selecting the appropriate option: https://www.postgresql.org/download/
+
+The installation will talk you through the process. The default password should be "postgres", which you should make a note of.
+
+Next from the command line navigate to the following folder:
 ```
 "Program Files/PostgreSQL\15\bin"
 ```
