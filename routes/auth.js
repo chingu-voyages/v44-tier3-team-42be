@@ -43,12 +43,14 @@ passport.use(new LocalStrategy(function verify(username, password, cb) {
 
 passport.serializeUser(function(user, cb) {
   process.nextTick(function() {
+    console.log('if you are seeing this you are getting some serialisation');
     cb(null, { id: user.id, username: user.username });
   });
 });
 
 passport.deserializeUser(function(user, cb) {
   process.nextTick(function() {
+    console.log('if you see this you are getting some deserialisation');
     return cb(null, user);
   });
 });
