@@ -68,7 +68,7 @@ router.post('/logout', function(req, res, next) {
 
 router.get('/signup', function(req, res, next) {
   
-  res.send('signup');
+  res.json({message: 'signup route'});
 });
 
 /* Sign up user*/
@@ -76,7 +76,7 @@ router.get('/signup', function(req, res, next) {
 router.post('/signup', function(req, res, next){
   const { username, email } = req.body
   if (!email || !username || !req.body.password){
-    return res.status(500).send('You must enter all fields to sign up');
+    return res.status(500).json({message: 'You must enter all fields to sign up'});
   }
   var salt = crypto.randomBytes(16);  
   crypto.pbkdf2(req.body.password, salt, 310000, 32, 'sha256', function(err, hashedPassword){    
@@ -85,7 +85,7 @@ router.post('/signup', function(req, res, next){
     (error, results) => {
       if (error) {
         if (error.constraint === "users_email_key"){
-          return res.status(500).send("A user with that email already exists. Please sign up with a different email address");
+          return res.status(500).json({message: "A user with that email already exists. Please sign up with a different email address"});
         }
         
         throw error
@@ -104,7 +104,7 @@ router.post('/signup', function(req, res, next){
         res.redirect('/');
       })      */
       //res.redirect('/');
-      res.json(user);
+      res.status(200).json(user);
   })    
   
   })
