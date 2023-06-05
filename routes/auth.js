@@ -26,20 +26,18 @@ passport.use(new LocalStrategy(function verify(username, password, cb) {
       
     if (error) { return cb(error); }
     if (!results.rows[0]) { 
-      //console.log('seems like no user found with matching details');
       return cb(null, false, { message: 'Incorrect username or password.' }); }
       
 
     crypto.pbkdf2(password, results.rows[0].salt, 310000, 32, 'sha256', function(err, hashedPassword) {
-      if (error) { return cb(error); }
+      
+      if (err) { return cb(err); }
       if (!crypto.timingSafeEqual(results.rows[0].hashed_password, hashedPassword)) {
         //console.log('seems like password did not match');
         return cb(null, false, { message: 'Incorrect username or password.' });
         
       }
-      //console.log(results.rows[0]);
-      return cb(null, results.rows[0], { message: 'login successful.' });
-      
+      return cb(null, results.rows[0]);
     });
   });
 }));
@@ -75,42 +73,27 @@ check the email instead of the username. Obviously we'll need a better permanent
 work to be done
 */
 function testFunction (req, res, next) {
-  console.log(req.body);
-  //req.body.username = req.body.email;
+  req.body.username = req.body.email;
   console.log(req.body);
   next()
   
 }
 
+// NOTE: The frontend uses this route AND method to
+// login an existing user with their email and password
+router.post('/login', testFunction, passport.authenticate('local'));
 
+// router.get('/login', function(req, res, next) {
+//   res.render('login');
+// });
 
-router.post('/login', function(req, res, next) {
-         passport.authenticate('local', {successMessage: true, failureMessage: true}, function(err, user, info) {
-          
-           if (err) { return next(err) }
-           if (!user) { 
-            passport.authenticate('allFailed') 
-            return res.status(500).json(info)
-          
-          }
-          
-          //passport.authenticate.strategy.success();
-          req.logIn(user, function(err) {
-            if (err) { return next(err); }
-            return res.json(info);
-          })
-                    
-         })(req, res, next);
-       });
-
-
-
-/* Previous login post route
-router.post('/login', passport.authenticate('local'));
-previous login post route ENDS*/
-
-
-
+// router.post('/login/password', passport.authenticate('local', {
+//   successRedirect: '/',
+//   failureRedirect: '/login'
+  
+//   ,
+//   failureMessage: true
+// }));
 
 router.post('/logout', function(req, res, next) {
   
@@ -119,10 +102,6 @@ router.post('/logout', function(req, res, next) {
     
     res.json({message: 'logged out'});
   });
-});
-
-router.get('/signup', function(req, res, next) {
-  res.render('signup');
 });
 
 /* Sign up user*/
@@ -135,20 +114,21 @@ router.post('/signup', function(req, res, next){
     pool.query('INSERT INTO users (username, email, hashed_password, salt) VALUES ($1, $2, $3, $4) RETURNING *', [username, email, hashedPassword, salt], 
     (error, results) => {
       if (error) {
-        throw error
+        res.status(401).json({message: error.message});
+        return next(error);
       }
-      var user = {
-        id: this.lastID,
-        username: req.body.username,
-        email: email
-      };
+      // var user = {
+      //   id: this.lastID,
+      //   username: req.body.username,
+      //   email: email
+      // };
       /*SO THIS WOULD BE A GOOD THING TO RETURN TO, I DON'T GET HOW THERE COULD BE A REQ.LOGIN BECAUSE LOGIN ISN'T PART OF THE
       REQUEST BODY BUT WHO KNOWS, I'LL COME BACK TO THIS
       req.login(user, function(err) {
         if (err) { return next(err); }
         res.redirect('/');
       })*/      
-      res.redirect('/');
+      res.status(200).end();
   })    
   })
 })
