@@ -266,4 +266,153 @@ router.delete('/journal-with-name', async function(req, res, next) {
   }  
 })
 
+/*Edit a saved journal */
+
+/*
+So my thinking here is that the logic needs to establish whether the new entry contains more or fewer sections than the previous
+entry. The content is going to get spread between lots of different cells, which is fine I guess. They don't have to be stored in
+neighbouring cells. So yeah,
+
+fewer sections:
+
+update the first x sections and delete any remaining, where x is the new number of sections (and less than the original)
+
+more sections:
+
+update all of the existing sections and then write the new content to new sections
+
+where any sections are deleted, those reference ids will need to be removed from journal_content, journal_sections and journal_references
+where any sections are added, those reference ids will need to be added to journal_content, journal_sections and journal_references
+
+
+*/
+
+router.put('/edit-journal', async function(req, res, next) {
+  const client = await pool.connect()
+
+  const userId = req.user.id;
+  const journalTitle = req.query.title;
+
+  /**
+   * depending how data is provided, you will need logic to compare the number of old and new sections
+   * 
+   */
+
+  const newNumberOfSections = 5;
+  
+  //queries to locate the relevant identifiers for the different parts of the database where the content and its references are stored
+
+  const journalReferenceQuery = 'SELECT * FROM journal_references WHERE user_id = $1 AND journal_title = $2'
+  const journalReferenceValues = [userId, journalTitle]
+
+  const journalSectionsQuery = 'SELECT * FROM journal_sections WHERE journal_reference_id = $1'
+
+
+  //query to update
+  const updateJournalContentQuery = 'UPDATE journal_content SET content = $1 WHERE id = $2'
+
+  //Query to delete
+
+  const deleteJournalContentQuery = 'DELETE FROM journal_content WHERE id = $1'
+
+  //queries to delete the entries in journal_sections and journal_references 
+  //(Note: dynamic query to delete journal_content entries generated below)
+
+  //const journalSectionsDelete = 'DELETE FROM journal_sections WHERE journal_reference_id = $1'
+
+  //const journalReferenceDelete = 'DELETE FROM journal_references WHERE id = $1'
+
+   //executes set of queries
+   try {
+    //begins database transaction
+    await client.query('BEGIN')
+
+    //makes async query
+    const dbReferencesResponse = await client.query(journalReferenceQuery, journalReferenceValues);
+    //extracts details of journal reference
+    const journalReferenceDetails = dbReferencesResponse.rows[0];
+    //extracts journal_reference.id
+    const journalReferenceId = [journalReferenceDetails.id];
+    //makes async query to retrieve journal sections
+    const dbSectionsResponse = await client.query(journalSectionsQuery, journalReferenceId);
+    
+    //maps the dbSectionsResponse query to create an array of indexes of journal_content entries that should be edited or deleted
+    let arrayOfExistingIndexes = [];
+    
+    const journalSectionsValues = dbSectionsResponse.rows.map((section) => {      
+      return arrayOfExistingIndexes.push(section.id.toString());      
+    })
+    
+    let arrayOfIndexesToUpdate = [];
+    let arrayOfIndexesToDelete = [];
+    
+
+    const existingNumberOfSections = arrayOfExistingIndexes.length;
+    const largerNumberOfSections = (number1, number2) => {
+      if (number1 < number2){
+        return number2;
+      } else return number1;
+    }
+
+    const greaterNumber = largerNumberOfSections(newNumberOfSections, existingNumberOfSections);
+    for (let z=0; z<greaterNumber; z++){
+      if (arrayOfIndexes[z]){
+        arrayOfIndexesToUpdate.push(arrayOfIndexes[z]);
+      }
+    }
+    
+    if (arrayOfIndexes.length < previousNumberOfSections){
+
+    }
+
+    /*
+    //if there is only a journal_reference entry but no sections / content, the below if section will be skipped and only
+    //the journal_reference entry will be deleted. If there are journal_content and journal_sections entries, if section
+    //will not be skipped and those entries will also be deleted
+    if (arrayOfIndexes.length > 0){
+
+    
+    //generates a set of parameters for the dynamic query below, eg: $1, $2... depending on the number of content sections that 
+    //need deleting
+
+    var params = [];
+
+    for(var i = 1; i <= arrayOfIndexes.length; i++) {
+
+      params.push('$' + i);
+
+    }
+
+    //generates a dynamic query that deletes all of the different sections of content
+    const journalContentDelete = 'DELETE FROM journal_content WHERE journal_section_id IN (' + params.join(',') + ')';
+    
+    //deletes all the different sections of content in journal_content
+    await client.query(journalContentDelete, arrayOfIndexes);
+
+    //deletes all the section entries in journal_sections
+    await client.query(journalSectionsDelete, journalReferenceId);
+  }
+    //deletes the reference to the journal in journal_references
+    await client.query(journalReferenceDelete, journalReferenceId);
+    
+
+    //commits database changes, provided there have been no errors
+    await client.query('commit');
+
+    //returns status okay with all the details for that journal entry
+    return res.status(200).json({message: `Journal entry with name '${journalTitle}' has been deleted`});
+    */
+    await client.query('commit');
+            
+  } catch (err) {
+    //returns generic error message
+    
+    res.status(404).json({message: `It has not been possible to delete a journal entry of the name '${journalTitle}'`})  
+  }  finally {
+    //releases client from pool
+    client.release()
+  }  
+})
+
+
 module.exports = router;
