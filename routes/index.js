@@ -48,8 +48,8 @@ router.get('/journal-with-name', async function(req, res, next) {
 /*Browse existing journal entries get request */
 
 router.get('/browse-journals', async function(req, res, next) {
-  //console.log('browse journals called')
-  //configures client to connect to database
+    
+  if (!req.user){return res.status(500).json({message: 'user not logged in'})}
   const client = await pool.connect()
 
   //harvests userId from session data (via cookies)

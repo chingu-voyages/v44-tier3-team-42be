@@ -89,19 +89,28 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(passport.authenticate('session'));
 // Need to be used within routes...
 // app.use(passport.authenticate('local'));
 
 /*I think this bit is for sending messages*/
 app.use(function(req, res, next) {
-  //console.log('anonymous message function called');
+  //console.log('and then this is called');
+  
   var msgs = req.session.messages || [];
+  //console.log(msgs);;
+  //res.messages = msgs;
   res.locals.messages = msgs;
+  //res.messages = msgs;
+  //res.json = {msgs};
   res.locals.hasMessages = !! msgs.length;
-  req.session.messages = [];
+  //req.session.messages = [];
   next();
 });
+
 /*message sending experiment ends*/
+
+
 
 app.use('/', indexRouter);
 app.use('/', authRouter);
