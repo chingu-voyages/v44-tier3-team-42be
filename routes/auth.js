@@ -34,7 +34,8 @@ passport.use(new LocalStrategy(function verify(username, password, cb) {
       if (!crypto.timingSafeEqual(results.rows[0].hashed_password, hashedPassword)) {
         return cb(null, false, { message: 'Incorrect username or password.' });
       }
-      return cb(null, true);
+      //results.rows[0] had been changed to true in dev version when branch created
+      return cb(null, results.rows[0]);
     });
   });
 }));
@@ -52,6 +53,30 @@ passport.deserializeUser(function(user, cb) {
     return cb(null, user);
   });
 });
+
+/*login logic in bug/various-paths at time branch was created*/
+
+router.post('/login', function(req, res, next) {
+  passport.authenticate('local', {successMessage: true, failureMessage: true}, function(err, user, info) {
+   
+    if (err) { return next(err) }
+    if (!user) { 
+     passport.authenticate('allFailed') 
+     return res.status(500).json(info)
+   
+   }
+   
+   //passport.authenticate.strategy.success();
+   req.logIn(user, function(err) {
+     if (err) { return next(err); }
+     const {id, email} = user;
+     return res.json({id, email});
+   })
+             
+  })(req, res, next);
+});
+
+/*login logic in bug/various-paths at time branch was created ENDS */
 
 /*login logic in dev at time branch was created*/
 /*

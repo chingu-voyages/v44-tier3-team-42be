@@ -288,17 +288,31 @@ where any sections are added, those reference ids will need to be added to journ
 */
 
 router.put('/edit-journal', async function(req, res, next) {
+
+  //currently configured to take one long string of all the updated content, in req.body.updatedContent
+  //the title, in req.body.title
+
   const client = await pool.connect()
 
+  //harvests journal title and id from req.body object
+  const { title, journalId } = req.body;
+  
+  //transforms journal entry into an array of strings each of no more than 1000 characters in length
+  const processedEntry = journalDivider.journalDivider(req.body.updatedContent);
+  //determines the number of sections in which the entry will be saved
+  const newNumberOfSections = processedEntry.length;
+
   const userId = req.user.id;
-  const journalTitle = req.query.title;
+  console.log(userId);
+  const journalTitle = req.body.title;
+  console.log(journalTitle);
 
   /**
    * depending how data is provided, you will need logic to compare the number of old and new sections
    * 
    */
 
-  const newNumberOfSections = 5;
+  //const newNumberOfSections = 5;
   
   //queries to locate the relevant identifiers for the different parts of the database where the content and its references are stored
 
@@ -326,15 +340,18 @@ router.put('/edit-journal', async function(req, res, next) {
    try {
     //begins database transaction
     await client.query('BEGIN')
+    
 
     //makes async query
     const dbReferencesResponse = await client.query(journalReferenceQuery, journalReferenceValues);
     //extracts details of journal reference
     const journalReferenceDetails = dbReferencesResponse.rows[0];
     //extracts journal_reference.id
+    console.log(journalReferenceDetails);
     const journalReferenceId = [journalReferenceDetails.id];
     //makes async query to retrieve journal sections
     const dbSectionsResponse = await client.query(journalSectionsQuery, journalReferenceId);
+    console.log('got through database requests');
     
     //maps the dbSectionsResponse query to create an array of indexes of journal_content entries that should be edited or deleted
     let arrayOfExistingIndexes = [];
@@ -343,13 +360,17 @@ router.put('/edit-journal', async function(req, res, next) {
       return arrayOfExistingIndexes.push(section.id.toString());      
     })
     
+
+    console.log(arrayOfExistingIndexes);
+
     let arrayOfIndexesToUpdate = [];
     let arrayOfIndexesToDelete = [];
     
 
     const existingNumberOfSections = arrayOfExistingIndexes.length;
 
-    if (existingNumberOfSections > newNumberOfSections){
+    console.log(`new number of sections: ${newNumberOfSections}`);
+    if (existingNumberOfSections >= newNumberOfSections){
       //this will require leftover sections to be deleted
       for (let z = 0; z < newNumberOfSections; z++){
         arrayOfIndexesToUpdate.push(arrayOfExistingIndexes[z]);
@@ -359,11 +380,56 @@ router.put('/edit-journal', async function(req, res, next) {
       }
     }
 
+    if (newNumberOfSections > existingNumberOfSections){
+      for (let v = 0; v < existingNumberOfSections; v++){
+        arrayOfIndexesToUpdate.push(arrayOfExistingIndexes[v]);
+      }
+    }
 
     console.log('array of indexes to update...');
     console.log(arrayOfIndexesToUpdate);
     console.log('array of indexes to delete...')
+    console.log(arrayOfIndexesToDelete); 
+
+    //const updateJournalContentQuery = 'UPDATE journal_content SET content = $1 WHERE journal_section_id = $2'
+    let arrayOfUpdatedContentResponses = [];
+    for (let c = 0; c < arrayOfIndexesToUpdate.length; c++){
+      const journalContentValues = [arrayOfIndexesToUpdate[c].id, processedEntry[c]];
+      const dbResponse = await client.query(updateJournalContentQuery, journalContentValues)
+      arrayOfUpdatedContentResponses.push(dbResponse.rows[0]);
+    }
+
+    if (arrayOfIndexesToDelete){
+      var params = [];
+
+    for(var d = 1; d <= arrayOfIndexesToDelete.length; d++) {
+
+      params.push('$' + d);
+
+    }
+
+    //generates a dynamic query that deletes all of the different sections of content
+    const journalContentDelete = 'DELETE FROM journal_content WHERE journal_section_id IN (' + params.join(',') + ')';
+    
+    //deletes all the different sections of content in journal_content
+    await client.query(journalContentDelete, arrayOfIndexesToDelete);
+
+    //generates a dynamic query that deletes all of the different sections of journal_sections
+    const journalSectionsDelete = 'DELETE FROM journal_sections WHERE journal_section_id IN (' + params.join(',') + ')';
+
+    //deletes all the different sections in journal_sections
+    await client.query(journalSectionsDelete, arrayOfIndexesToDelete);
+
+    }
+
+    
+
+/*
+    console.log('array of indexes to update...');
+    console.log(arrayOfIndexesToUpdate);
+    console.log('array of indexes to delete...')
     console.log(arrayOfIndexesToDelete);  
+    */
 
     
 
@@ -405,11 +471,12 @@ router.put('/edit-journal', async function(req, res, next) {
     return res.status(200).json({message: `Journal entry with name '${journalTitle}' has been deleted`});
     */
     await client.query('commit');
+    res.json({message: 'your query went through'});
             
   } catch (err) {
     //returns generic error message
     
-    res.status(404).json({message: `It has not been possible to delete a journal entry of the name '${journalTitle}'`})  
+    res.status(404).json({message: `It has not been possible to edit your journal entry of the name '${journalTitle}'`})  
   }  finally {
     //releases client from pool
     client.release()
