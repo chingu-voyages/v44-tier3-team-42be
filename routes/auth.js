@@ -53,6 +53,8 @@ passport.deserializeUser(function(user, cb) {
   });
 });
 
+/*login logic in dev at time branch was created*/
+/*
 router.post('/login', (req, res, next) => {
   passport.authenticate('local', (err, isSuccessful, info) => {
   if (!isSuccessful) {
@@ -62,6 +64,8 @@ router.post('/login', (req, res, next) => {
   res.status(200).end();
   })(req, res, next);
 });
+*/
+/*login logic in dev at time branch was created ENDS*/
 
 router.post('/logout', function(req, res, next) {
   req.logout(function(err) {
