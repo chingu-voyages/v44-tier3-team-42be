@@ -348,22 +348,24 @@ router.put('/edit-journal', async function(req, res, next) {
     
 
     const existingNumberOfSections = arrayOfExistingIndexes.length;
-    const largerNumberOfSections = (number1, number2) => {
-      if (number1 < number2){
-        return number2;
-      } else return number1;
-    }
 
-    const greaterNumber = largerNumberOfSections(newNumberOfSections, existingNumberOfSections);
-    for (let z=0; z<greaterNumber; z++){
-      if (arrayOfIndexes[z]){
-        arrayOfIndexesToUpdate.push(arrayOfIndexes[z]);
+    if (existingNumberOfSections > newNumberOfSections){
+      //this will require leftover sections to be deleted
+      for (let z = 0; z < newNumberOfSections; z++){
+        arrayOfIndexesToUpdate.push(arrayOfExistingIndexes[z]);
+      }
+      for (let w = newNumberOfSections; w < existingNumberOfSections; w++){
+        arrayOfIndexesToDelete.push(arrayOfExistingIndexes[w]);
       }
     }
-    
-    if (arrayOfIndexes.length < previousNumberOfSections){
 
-    }
+
+    console.log('array of indexes to update...');
+    console.log(arrayOfIndexesToUpdate);
+    console.log('array of indexes to delete...')
+    console.log(arrayOfIndexesToDelete);  
+
+    
 
     /*
     //if there is only a journal_reference entry but no sections / content, the below if section will be skipped and only
