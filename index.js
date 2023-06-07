@@ -1,6 +1,6 @@
 const express = require('express')
 // const bodyParser = require('body-parser')
-const cors = require('cors');
+
 const app = express()
 const port = 3000
 const cors = require('cors');
@@ -25,6 +25,8 @@ const pgPool = new pg.Pool({
   port: 5432
 });
 */
+
+
 
 // Allow CORS for known origins
 app.use(
@@ -58,7 +60,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 //     extended: true,
 //   })
 // )
-
+/*
 // Allow CORS for known origins
 app.use(
   cors({
@@ -70,6 +72,8 @@ app.use(
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   }),
 );
+*/
+
 
 // Temporary ejs code enables mock front-end for development purposes
 app.set('views', path.join(__dirname, 'views'));
@@ -82,6 +86,8 @@ app.use(express.urlencoded({ extended: false }));
 // NOTE: cookie-parser middleware is no longer needed 
 // for express-session module to work as of version 1.5.0+
 // app.use(cookieParser('keyboard cat'));
+
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
