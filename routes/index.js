@@ -213,4 +213,94 @@ router.post('/save-journal', async function(req, res, next) {
 
 });
 
+/*Delete journal entry by name */
+
+router.delete('/journal-with-name', async function(req, res, next) {
+  const client = await pool.connect()
+
+  const userId = req.user.id;
+  const journalTitle = req.query.title;
+  
+  //queries to locate the relevant identifiers for the different parts of the database where the content and its references are stored
+
+  const journalReferenceQuery = 'SELECT * FROM journal_references WHERE user_id = $1 AND journal_title = $2'
+  const journalReferenceValues = [userId, journalTitle]
+
+  const journalSectionsQuery = 'SELECT * FROM journal_sections WHERE journal_reference_id = $1'
+
+  //queries to delete the entries in journal_sections and journal_references 
+  //(Note: dynamic query to delete journal_content entries generated below)
+
+  const journalSectionsDelete = 'DELETE FROM journal_sections WHERE journal_reference_id = $1'
+
+  const journalReferenceDelete = 'DELETE FROM journal_references WHERE id = $1'
+
+   //executes set of queries
+   try {
+    //begins database transaction
+    await client.query('BEGIN')
+
+    //makes async query
+    const dbReferencesResponse = await client.query(journalReferenceQuery, journalReferenceValues);
+    //extracts details of journal reference
+    const journalReferenceDetails = dbReferencesResponse.rows[0];
+    //extracts journal_reference.id
+    const journalReferenceId = [journalReferenceDetails.id];
+    //makes async query to retrieve journal sections
+    const dbSectionsResponse = await client.query(journalSectionsQuery, journalReferenceId);
+    
+    //maps the dbSectionsResponse query to create an array of indexes of journal_content entries that should be deleted
+    let arrayOfIndexes = [];
+    
+    const journalSectionsValues = dbSectionsResponse.rows.map((section) => {      
+      return arrayOfIndexes.push(section.id.toString());      
+    })
+    
+    //if there is only a journal_reference entry but no sections / content, the below if section will be skipped and only
+    //the journal_reference entry will be deleted. If there are journal_content and journal_sections entries, if section
+    //will not be skipped and those entries will also be deleted
+    if (arrayOfIndexes.length > 0){
+
+    
+    //generates a set of parameters for the dynamic query below, eg: $1, $2... depending on the number of content sections that 
+    //need deleting
+
+    var params = [];
+
+    for(var i = 1; i <= arrayOfIndexes.length; i++) {
+
+      params.push('$' + i);
+
+    }
+
+    //generates a dynamic query that deletes all of the different sections of content
+    const journalContentDelete = 'DELETE FROM journal_content WHERE journal_section_id IN (' + params.join(',') + ')';
+    
+    //deletes all the different sections of content in journal_content
+    await client.query(journalContentDelete, arrayOfIndexes);
+
+    //deletes all the section entries in journal_sections
+    await client.query(journalSectionsDelete, journalReferenceId);
+  }
+    //deletes the reference to the journal in journal_references
+    await client.query(journalReferenceDelete, journalReferenceId);
+    
+
+    //commits database changes, provided there have been no errors
+    await client.query('commit');
+
+    //returns status okay with all the details for that journal entry
+    return res.status(200).json({message: `Journal entry with name '${journalTitle}' has been deleted`});
+    
+            
+  } catch (err) {
+    //returns generic error message
+    
+    res.status(404).json({message: `It has not been possible to delete a journal entry of the name '${journalTitle}'`})  
+  }  finally {
+    //releases client from pool
+    client.release()
+  }  
+})
+
 module.exports = router;
