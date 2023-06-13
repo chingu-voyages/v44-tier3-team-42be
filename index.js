@@ -1,5 +1,5 @@
 const express = require('express')
-// const bodyParser = require('body-parser')
+const bodyParser = require('body-parser')
 const app = express()
 const port = 3000
 const cors = require('cors');
@@ -73,8 +73,8 @@ app.use(
 );
 
 // Temporary ejs code enables mock front-end for development purposes
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
+/*app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');*/
 
 
 app.use(logger('dev'));
@@ -84,6 +84,12 @@ app.use(express.urlencoded({ extended: false }));
 // for express-session module to work as of version 1.5.0+
 // app.use(cookieParser('keyboard cat'));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.json())
+app.use(
+   bodyParser.urlencoded({
+     extended: true,
+   })
+ )
 
 app.use(session({
   store: new pgSession ({
@@ -107,21 +113,9 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
 app.use(passport.authenticate('session'));
-// Need to be used within routes...
-// app.use(passport.authenticate('local'));
 
-
-/*I think this bit is for sending messages*/
-app.use(function(req, res, next) {
-  //console.log('anonymous message function called');
-  var msgs = req.session.messages || [];
-  res.locals.messages = msgs;
-  res.locals.hasMessages = !! msgs.length;
-  req.session.messages = [];
-  next();
-});
-/*message sending experiment ends*/
 
 app.use('/', indexRouter);
 app.use('/', authRouter);

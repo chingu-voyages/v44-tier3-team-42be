@@ -12,7 +12,7 @@ var journalDivider = require('../journals/journalDivider');
 
 
 //sends a message depending on whether user is logged in or not
-
+/*
 router.get('/', function(req, res, next) {
   
   if (!req.user) { return res.send('home page, not logged in'); }
@@ -21,11 +21,16 @@ router.get('/', function(req, res, next) {
   
   res.status(200).send('index page, logged in');
 });
-
+*/
 /*Get journal by name */
 
 router.get('/journal-with-name', async function(req, res, next) {
   const client = await pool.connect()
+  //returns error message if no req.user
+  if (!req.user){
+    return res.status(404).json({message: 'initialising user'});
+    //next();
+  }
 
   const userId = req.user.id;
   const journalTitle = req.query.title;
@@ -82,11 +87,15 @@ router.get('/journal-with-name', async function(req, res, next) {
 /*Browse existing journal entries get request */
 
 router.get('/browse-journals', async function(req, res, next) {
-    
+  //returns error message if no req.user
+  if (!req.user){
+    return res.status(404).json({message: 'initialising user'});
+  }
   const client = await pool.connect()
   
   //harvests userId from session data (via cookies)
-    
+    console.log(req.user.id);
+  //const userId = 48;
   const userId = req.user.id; 
 
   //configures database query / parameters

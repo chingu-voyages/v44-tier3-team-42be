@@ -40,6 +40,8 @@ passport.use(new LocalStrategy(function verify(username, password, cb) {
 //Serialise user so they stay logged in during session
 
 passport.serializeUser(function(user, cb) {
+  console.log('serializeUser has following user...')
+  console.log(user);
   
   process.nextTick(function() {
     cb(null, { id: user.id, username: user.username });
@@ -114,14 +116,18 @@ router.post('/signup', function(req, res, next){
       };
            
 
+      console.log('user added to db w details....');
+      console.log(user.email)
       
       req.logIn(user, function(err) {
-        if (err) { return next(err); }
+        if (err) { 
+          console.log(err.stack);
+          return next(err); }
         return res.json(user);
       })
 
           
-      res.status(200).end();
+      //res.status(200).end();
 
   })    
   
