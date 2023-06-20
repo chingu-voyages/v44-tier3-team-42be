@@ -13,7 +13,7 @@ let pgPool = new Pool({
     port: process.env.PORT
 })
 
-console.log(pgPool.options);
+//console.log(pgPool.options);
 
 module.exports = pgPool;
 

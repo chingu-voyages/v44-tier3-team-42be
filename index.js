@@ -7,6 +7,8 @@ const cors = require('cors');
 var path = require('path');
 const pgPool = require('./dbConfig');
 
+console.log(port);
+console.log(process.env.PORT)
 
 // Allow CORS for known origins
 app.use(
