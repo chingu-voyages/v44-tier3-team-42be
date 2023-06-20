@@ -6,7 +6,8 @@ var router = express.Router();
 var dbAccess = require('../dbConfig');
 
 const Pool = require('pg').Pool
-const pool = new Pool(dbAccess);
+//const pool = new Pool(dbAccess);
+const pool = require('../dbConfig2');
 
 
 //Passport authentication logic

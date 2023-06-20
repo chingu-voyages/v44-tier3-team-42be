@@ -1,7 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
-const port = 3000
+const port = 10000
 const cors = require('cors');
 var path = require('path');
 // const cookieParser = require("cookie-parser");
@@ -13,7 +13,9 @@ const dotenv = require('dotenv').config();
 var dbAccess = require('./dbConfig');
 
 const Pool = require('pg').Pool
-const pgPool = new Pool(dbAccess);
+//let pgPool = new Pool(dbAccess);
+
+const pgPool = require('./dbConfig2');
 /*
 const pgPool = new pg.Pool({
   // Pool options:
@@ -25,6 +27,11 @@ const pgPool = new pg.Pool({
 });
 */
 
+app.use('/', function(req,res,next){
+  console.log('This is the highest level middleware and here is req.rawHeaders');
+  console.log(req.rawHeaders);
+  next();
+})
 
 
 // Allow CORS for known origins
@@ -36,7 +43,7 @@ app.use(
         : process.env.PROD_ORIGIN,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  }),
+  })
 );
 
 const logger = require('morgan');
@@ -103,16 +110,25 @@ app.use(session({
   resave: false,
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
   // Insert express-session options here
-}));
-
-
-
-
-
-
+}), function(req,res,next){
+  console.log('this is from app.use(session) and here is the session ID...');
+  console.log(req.sessionID);
+  next();
+});
 
 app.use(passport.initialize());
-app.use(passport.session());
+app.use(passport.session(), function(req,res,next){
+  console.log('this is from app.use(passport.session) and here is the req.user status...');
+  
+  if (!req.user){
+    console.log('no req user has been appended, as authentication has failed');
+    return next();
+  }
+  
+  console.log('req.user has been appended, as authentication has succeeded...');
+  console.log(req.user);
+  next();
+});
 
 app.use(passport.authenticate('session'));
 
@@ -124,3 +140,5 @@ app.use('/', authRouter);
   app.listen(port, () => {
     console.log(`App running on port ${port}.`)
   })
+
+  

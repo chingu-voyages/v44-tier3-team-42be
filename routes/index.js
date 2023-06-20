@@ -6,7 +6,13 @@ var router = express.Router();
 var dbAccess = require('../dbConfig');
 const session = require('express-session');
 const Pool = require('pg').Pool
-const pool = new Pool(dbAccess);
+const pool = require('../dbConfig2');
+//const pool = new Pool(dbAccess);
+
+//console.log('this is pgPool');
+//console.log(pgPool);
+//console.log('this is pool');
+//console.log(pool);
 
 var journalDivider = require('../journals/journalDivider');
 
@@ -311,6 +317,8 @@ router.put('/edit-section', async function(req, res, next){
   //parses data from request body
   const { id, content } = req.body;
 
+  console.log('here is the content sent to update');
+  console.log(content);
   //database query and values
   const databaseQuery = 'UPDATE journal_content SET content = $1 WHERE id = $2 RETURNING *'
   
@@ -319,7 +327,9 @@ router.put('/edit-section', async function(req, res, next){
   try {
     //initiates database query
     await client.query('BEGIN')
+    console.log(values);
     const databaseResponse = await client.query(databaseQuery, values);
+    
     
     //parses values from query response
     //const {journal_title, cover_image} = databaseResponse.rows[0];
