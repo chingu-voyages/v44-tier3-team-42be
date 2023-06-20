@@ -4,34 +4,7 @@ const app = express()
 const port = 3000
 const cors = require('cors');
 var path = require('path');
-// const cookieParser = require("cookie-parser");
-const pg = require('pg');
-const dotenv = require('dotenv').config();
-
-/*accesses database login details from .env file via dbConfig.js to establish new client pool*/
-
-var dbAccess = require('./dbConfig');
-
-const Pool = require('pg').Pool
-//let pgPool = new Pool(dbAccess);
-
-const pgPool = require('./dbConfig2');
-/*
-const pgPool = new pg.Pool({
-  // Pool options:
-  user: 'thoughtflowadmin',
-  host: 'localhost',
-  database: 'thoughtflow',
-  password: 'p@ssword',
-  port: 5432
-});
-*/
-
-app.use('/', function(req,res,next){
-  console.log('This is the highest level middleware and here is req.rawHeaders');
-  console.log(req.rawHeaders);
-  next();
-})
+const pgPool = require('./dbConfig');
 
 
 // Allow CORS for known origins
@@ -58,30 +31,6 @@ const authRouter = require('./routes/auth');
 
 //assign public directory
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Similar middlewares are used in lines 67-68
-// app.use(bodyParser.json())
-// app.use(
-//   bodyParser.urlencoded({
-//     extended: true,
-//   })
-// )
-
-// Allow CORS for known origins
-app.use(
-  cors({
-    origin:
-      process.env.NODE_ENV === 'development'
-        ? process.env.DEV_ORIGIN
-        : process.env.PROD_ORIGIN,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  }),
-);
-
-// Temporary ejs code enables mock front-end for development purposes
-/*app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');*/
 
 
 app.use(logger('dev'));
@@ -110,25 +59,10 @@ app.use(session({
   resave: false,
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
   // Insert express-session options here
-}), function(req,res,next){
-  console.log('this is from app.use(session) and here is the session ID...');
-  console.log(req.sessionID);
-  next();
-});
+}));
 
 app.use(passport.initialize());
-app.use(passport.session(), function(req,res,next){
-  console.log('this is from app.use(passport.session) and here is the req.user status...');
-  
-  if (!req.user){
-    console.log('no req user has been appended, as authentication has failed');
-    return next();
-  }
-  
-  console.log('req.user has been appended, as authentication has succeeded...');
-  console.log(req.user);
-  next();
-});
+app.use(passport.session());
 
 app.use(passport.authenticate('session'));
 

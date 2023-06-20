@@ -3,11 +3,7 @@ var passport = require('passport');
 var LocalStrategy = require('passport-local');
 var crypto = require('crypto');
 var router = express.Router();
-var dbAccess = require('../dbConfig');
-
-const Pool = require('pg').Pool
-//const pool = new Pool(dbAccess);
-const pool = require('../dbConfig2');
+const pool = require('../dbConfig');
 
 
 //Passport authentication logic
@@ -40,17 +36,13 @@ passport.use(new LocalStrategy(function verify(username, password, cb) {
 
 //Serialise user so they stay logged in during session
 
-passport.serializeUser(function(user, cb) {
-  console.log('serializeUser has following user...')
-  console.log(user);
-  
+passport.serializeUser(function(user, cb) {  
   process.nextTick(function() {
     cb(null, { id: user.id, username: user.username });
   });
 });
 
-passport.deserializeUser(function(user, cb) {
-  
+passport.deserializeUser(function(user, cb) {  
   process.nextTick(function() {
     return cb(null, user);
   });
@@ -114,22 +106,13 @@ router.post('/signup', function(req, res, next){
         id: this.lastID,
         username: req.body.username,
         email: email
-      };
-           
-
-      console.log('user added to db w details....');
-      console.log(user.email)
+      };      
       
       req.logIn(user, function(err) {
-        if (err) { 
-          console.log(err.stack);
+        if (err) {           
           return next(err); }
         return res.json(user);
       })
-
-          
-      //res.status(200).end();
-
   })    
   
   })

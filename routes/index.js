@@ -1,24 +1,13 @@
 var express = require('express');
-var passport = require('passport');
-var LocalStrategy = require('passport-local');
-var crypto = require('crypto');
 var router = express.Router();
-var dbAccess = require('../dbConfig');
-const session = require('express-session');
-const Pool = require('pg').Pool
-const pool = require('../dbConfig2');
-//const pool = new Pool(dbAccess);
-
-//console.log('this is pgPool');
-//console.log(pgPool);
-//console.log('this is pool');
-//console.log(pool);
+const pool = require('../dbConfig');
 
 var journalDivider = require('../journals/journalDivider');
 
-
-//sends a message depending on whether user is logged in or not
+//GET journal-with-name
 /*
+sends a message depending on whether user is logged in or not
+
 router.get('/', function(req, res, next) {
   
   if (!req.user) { return res.send('home page, not logged in'); }
@@ -100,8 +89,7 @@ router.get('/browse-journals', async function(req, res, next) {
   const client = await pool.connect()
   
   //harvests userId from session data (via cookies)
-    console.log(req.user.id);
-  //const userId = 48;
+  
   const userId = req.user.id; 
 
   //configures database query / parameters
