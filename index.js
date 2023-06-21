@@ -1,7 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
-const port = process.env.HOST || 3000
+const port = 10000
 const cors = require('cors');
 var path = require('path');
 // const cookieParser = require("cookie-parser");
