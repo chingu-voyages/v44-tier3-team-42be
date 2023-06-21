@@ -108,7 +108,11 @@ app.use(session({
   saveUninitialized: true,
   //secret: process.env.FOO_COOKIE_SECRET,
   resave: false,
-  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
+  cookie: { 
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    sameSite: true,
+    secure: true 
+  } // 30 days
   // Insert express-session options here
 }), function(req,res,next){
   console.log('this is from app.use(session) and here is the session ID...');
