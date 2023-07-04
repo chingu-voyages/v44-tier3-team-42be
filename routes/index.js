@@ -1,17 +1,12 @@
 var express = require('express');
-var passport = require('passport');
-var LocalStrategy = require('passport-local');
-var crypto = require('crypto');
 var router = express.Router();
-var dbAccess = require('../dbConfig');
-const session = require('express-session');
-const Pool = require('pg').Pool
-const pool = new Pool(dbAccess);
+const pool = require('../dbConfig');
 
 var journalDivider = require('../journals/journalDivider');
 
-
-//sends a message depending on whether user is logged in or not
+//GET journal-with-name
+/*
+sends a message depending on whether user is logged in or not
 
 router.get('/', function(req, res, next) {
   
@@ -21,11 +16,16 @@ router.get('/', function(req, res, next) {
   
   res.status(200).send('index page, logged in');
 });
-
+*/
 /*Get journal by name */
 
 router.get('/journal-with-name', async function(req, res, next) {
   const client = await pool.connect()
+  //returns error message if no req.user
+  if (!req.user){
+    return res.status(404).json({message: 'initialising user'});
+    //next();
+  }
 
   const userId = req.user.id;
   const journalTitle = req.query.title;
@@ -82,11 +82,14 @@ router.get('/journal-with-name', async function(req, res, next) {
 /*Browse existing journal entries get request */
 
 router.get('/browse-journals', async function(req, res, next) {
-    
+  //returns error message if no req.user
+  if (!req.user){
+    return res.status(404).json({message: 'initialising user'});
+  }
   const client = await pool.connect()
   
   //harvests userId from session data (via cookies)
-    
+  
   const userId = req.user.id; 
 
   //configures database query / parameters
@@ -302,6 +305,8 @@ router.put('/edit-section', async function(req, res, next){
   //parses data from request body
   const { id, content } = req.body;
 
+  console.log('here is the content sent to update');
+  console.log(content);
   //database query and values
   const databaseQuery = 'UPDATE journal_content SET content = $1 WHERE id = $2 RETURNING *'
   
@@ -310,7 +315,9 @@ router.put('/edit-section', async function(req, res, next){
   try {
     //initiates database query
     await client.query('BEGIN')
+    console.log(values);
     const databaseResponse = await client.query(databaseQuery, values);
+    
     
     //parses values from query response
     //const {journal_title, cover_image} = databaseResponse.rows[0];

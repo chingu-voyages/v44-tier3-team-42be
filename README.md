@@ -45,7 +45,7 @@ Connect to the thoughtflow database:
 Create database using the following command to create database:
 ~~~
 CREATE TABLE users (id SERIAL,username varchar(40),email varchar(50) UNIQUE,hashed_password bytea,salt bytea,PRIMARY KEY (id));
-CREATE TABLE journal_references (id SERIAL,user_id int REFERENCES users(id),journal_title varchar(50),cover_image varchar(60),UNIQUE (user_id, journal_title),PRIMARY KEY (id));
+CREATE TABLE journal_references (id SERIAL,user_id int REFERENCES users(id),journal_title varchar(50),cover_image varchar(200),UNIQUE (user_id, journal_title),PRIMARY KEY (id));
 CREATE TABLE journal_sections (id SERIAL,journal_reference_id int REFERENCES journal_references(id),section_number int,UNIQUE (journal_reference_id, section_number),PRIMARY KEY (id));
 CREATE TABLE journal_content (id SERIAL,journal_section_id int REFERENCES journal_sections(id) UNIQUE,content varchar(1000),PRIMARY KEY (id));
 ~~~
